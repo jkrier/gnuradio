@@ -11,7 +11,11 @@ RECEIVE_WINDOW_SECS = 2			# After 2 seconds request next packet burst
 PACKET_SIZE = 1500			# Packet Size
 FFT_SIZE = 1024				# FFT Window - larger is more acurate, smaller is faster
 THRESHOLD = -40				# dB that will identify a primary user	
-SWITCH_WINDOW_SECS = 2		
+SWITCH_WINDOW_SECS = 2	
+
+PU_IP_ADDR = "addr=192.168.40.2"
+CR_RX_IP_ADDR = "addr=192.168.40.3"
+CR_TX_IP_ADDR = "addr=192.168.40.4"	
 
 # 7 inch small antenna bands
 # 144 MHz, 430 MHz, 1200 MHz Tri-band

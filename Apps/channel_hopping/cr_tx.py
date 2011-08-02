@@ -88,7 +88,7 @@ class lab3_cr_tx(grc_wxgui.top_block_gui):
                         payload_length=self.pkt_size,
 		)
 		self.uhd_usrp_sink_0 = uhd.usrp_sink(
-			device_addr="",
+			device_addr=Settings.CR_TX_IP_ADDR,
 			io_type=uhd.io_type.COMPLEX_FLOAT32,
 			num_channels=1,
 		)
@@ -97,7 +97,7 @@ class lab3_cr_tx(grc_wxgui.top_block_gui):
 		self.uhd_usrp_sink_0.set_gain(self.tx_gain, 0)
 		self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
 		self.uhd_usrp_source_0 = uhd.usrp_source(
-			device_addr="",
+			device_addr=Settings.CR_TX_IP_ADDR,
 			io_type=uhd.io_type.COMPLEX_FLOAT32,
 			num_channels=1,
 		)
