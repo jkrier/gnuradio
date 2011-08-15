@@ -144,7 +144,7 @@ def freq_hopping():
 
         n_rcvd = 0
         n_right = 0
-	ch = 0
+		ch = 0
         
         def send_pkt(payload=''):
                 return tb.txpath.send_pkt(payload)
