@@ -140,63 +140,63 @@ class lab3_pu(grc_wxgui.top_block_gui):
 
 def freq_hopping():
 
-        global n_rcvd, n_right, ch
+	global n_rcvd, n_right, ch
 
-        n_rcvd = 0
-        n_right = 0
-		ch = 0
-        
-        def send_pkt(payload=''):
-                return tb.txpath.send_pkt(payload)
+	n_rcvd = 0
+	n_right = 0
+	ch = 0
 
-        # generate and send packets
-        pktno = 0
-        pkt_size = tb.pkt_size
-        burst_of_pkts = tb.burst_of_pkts
-        no_of_switch = tb.no_of_switch
+	def send_pkt(payload=''):
+		return tb.txpath.send_pkt(payload)
 
-        while 1:
-                # select a white space channel randomly (0, 1, or 2)
-                ch_white_space= random.randint(0,2)
-                print "white space = ch %2d" % ch_white_space
-                
-                # hopping between those two channels not selected as the white space
-                loop = 0
-                while (loop < no_of_switch):
-                        ch = 0  
-                       	loop += 1          
-                        for freq in tb.ch_freq:
-                                if (ch != ch_white_space):
-                                        target_freq = tb.ch_freq[ch]
-                                        center_freq_MHz = target_freq/1e6
-					print "Center Frequency = %.3f" % center_freq_MHz + " MHz"
-                                        
-                                        rx_tune = tb.uhd_usrp_source_0.set_center_freq(target_freq, 0)
-                                        if not rx_tune:
-                                                print "Failed to set RX frequency to", target_freq
-                                        tx_tune = tb.uhd_usrp_sink_0.set_center_freq(target_freq, 0)
-                                        if not tx_tune:
-                                                print "Failed to set TX frequency to", target_freq
+	# generate and send packets
+	pktno = 0
+	pkt_size = tb.pkt_size
+	burst_of_pkts = tb.burst_of_pkts
+	no_of_switch = tb.no_of_switch
 
-                                        time.sleep(tb.tune_delay)
+	while 1:
+		# select a white space channel randomly (0, 1, or 2)
+		ch_white_space= random.randint(0,2)
+		print "white space = ch %2d" % ch_white_space
+		
+		# hopping between those two channels not selected as the white space
+		loop = 0
+		while (loop < no_of_switch):
+				ch = 0  
+				loop += 1          
+				for freq in tb.ch_freq:
+						if (ch != ch_white_space):
+								target_freq = tb.ch_freq[ch]
+								center_freq_MHz = target_freq/1e6
+								print "Center Frequency = %.3f" % center_freq_MHz + " MHz"
+								
+								rx_tune = tb.uhd_usrp_source_0.set_center_freq(target_freq, 0)
+								if not rx_tune:
+										print "Failed to set RX frequency to", target_freq
+								tx_tune = tb.uhd_usrp_sink_0.set_center_freq(target_freq, 0)
+								if not tx_tune:
+										print "Failed to set TX frequency to", target_freq
 
-                                        # send a burst of packets
-                                        n = 0
-                                        while n < burst_of_pkts:
-                                                # prepare payload of the packet
-                                                data = (pkt_size - 2) * chr(pktno & 0xff)
-                                                payload = struct.pack('!H', pktno & 0xffff) + data
+								time.sleep(tb.tune_delay)
 
-                                                # send the packet
-                                                send_pkt(payload)
-                                                print "Packet %4d" % pktno + " sent on ch = %2d" % ch + " at %.3f" % center_freq_MHz + " MHz"
-                
-                                                n += 1
-                                                pktno += 1
+								# send a burst of packets
+								n = 0
+								while n < burst_of_pkts:
+										# prepare payload of the packet
+										data = (pkt_size - 2) * chr(pktno & 0xff)
+										payload = struct.pack('!H', pktno & 0xffff) + data
 
-                                        # dwell delay
-                                        time.sleep(tb.dwell_delay)
-                                ch += 1         
+										# send the packet
+										send_pkt(payload)
+										print "Packet %4d" % pktno + " sent on ch = %2d" % ch + " at %.3f" % center_freq_MHz + " MHz"
+		
+										n += 1
+										pktno += 1
+
+								# dwell delay
+								time.sleep(tb.dwell_delay)
+						ch += 1         
 
 
 if __name__ == '__main__':
