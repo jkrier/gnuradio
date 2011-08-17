@@ -188,21 +188,24 @@ class Queue():
 			
 		return pkt
 
+
 class Debug():
+	
 	def __init__():
 		self.probe = gr.probe_avg_mag_sqrd_c(0.001, 30)
 		mywindow = window.blackmanharris(self.fft_size)
 		self.fft = gr.fft_vcc(self.fft_size, True, mywindow)	
 		
+		
 class Manager():
 	
-	def __init__(self):
+	def __init__(self, ipaddr):
 		
 		self.tb = gr.top_block()
 		
 		access_code="0000111100010111"
 		
-		self.usrp = USRP("192.168.40.2")
+		self.usrp = USRP(ipaddr)
 		self.queue = Queue()
 		
 		self.src = Source()
