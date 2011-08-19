@@ -1,0 +1,4 @@
+class RF_Object():
+
+	def __init__(self):
+		

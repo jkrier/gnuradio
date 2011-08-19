@@ -23,7 +23,6 @@ class USRP():
 	def __init__(self, ipaddr):
 		
 		self.sampling_freq = 200e3
-		self.center_freq = 950e6
 		self.ipaddr = "addr="+ipaddr
 		
 		self.sink = uhd.usrp_sink(
@@ -41,7 +40,6 @@ class USRP():
 		
 		self.source.set_antenna("RX2", 0)
 		
-		self.set_both_freq(self.center_freq)
 		self.set_sample_rate(self.sampling_freq)
 		
 class Modulation():
@@ -129,19 +127,15 @@ class Packet_Encoder():
                         self.txpath,
                         payload_length=self.pkt_size,
 		)
-	
-	#def send_pkt(self, payload=''):
-		#data = (self.pkt_size - 2) * chr(0xff)
-		#payload = struct.pack('!H', 0xffff) + data
-		
-		#return self.txpath.send_pkt(payload)
 		
 class Packet_Decoder():
 	
 	
 	def rx_callback(self, ok, payload):
+		
+		print '%s Received a packet!' % self.name
 
-		print "Received a packet!"
+		#print '{} Received a packet!', self.name
 		self.dec.recv_pkt(ok, payload)
 		
 		#if (len(payload) > 0):
@@ -155,7 +149,10 @@ class Packet_Decoder():
                         #print "pktno = %4d  n_rcvd = %4d  len = %4d  ch = %2d  rcvd_rate = %.2f percent" % (
                     		#pktno, n_rcvd, len(payload), ch, rcvd_rate, )
 				
-	def __init__(self, code):
+	def __init__(self, code, name):
+		
+		self.name = name
+		
 		self.pkt_size = 1500
 		
 		self.n_rcvd = 0
@@ -199,7 +196,7 @@ class Debug():
 		
 class Manager():
 	
-	def __init__(self, ipaddr):
+	def __init__(self, ipaddr, name):
 		
 		self.tb = gr.top_block()
 		
@@ -221,7 +218,7 @@ class Manager():
 		#self.sink = Sink()
 		
 		self.demod = Demodulation()
-		self.decoder = Packet_Decoder(access_code)
+		self.decoder = Packet_Decoder(access_code, name)
 		
 		self.tb.connect((self.usrp.source, 0), (self.demod.dbpsk, 0))
 		self.tb.connect((self.demod.dbpsk, 0), (self.decoder.dec, 0))
