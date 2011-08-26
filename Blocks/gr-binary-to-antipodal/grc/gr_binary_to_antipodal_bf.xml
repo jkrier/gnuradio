@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<block>
+  <name>binary_to_antipodal_bf</name>
+  <key>gr_binary_to_antipodal_bf</key>
+  <category>MY BLOCKS</category>
+  <import>import gr_my</import>
+  <make>gr_my.gr_make_binary_to_antipodal_bf()</make>
+
+  <sink>
+    <name>in</name>
+    <type>byte</type>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>float</type>
+  </source>
+</block>
