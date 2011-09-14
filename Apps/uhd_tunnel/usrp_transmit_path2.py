@@ -40,9 +40,24 @@ def add_freq_option(parser):
                           action="callback", callback=freq_callback,
                           help="set Tx and/or Rx frequency to FREQ [default=%default]",
                           metavar="FREQ")
+                          
+def add_ipaddr_option(parser):
+    """
+    Hackery that has the --ipaddr option set both tx_freq and rx_freq
+    """
+    def ipaddr_callback(option, opt_str, value, parser):
+        parser.values.rx_ipaddr = value
+        parser.values.tx_ipaddr = value
+
+    if not parser.has_option('--ipaddr'):
+        parser.add_option("", '--ipaddr', type="string",
+                          action="callback", callback=ipaddr_callback, default='192.168.10.1',
+                          help="set Tx and/or Rx IP Address to IPADDR [default=%default]",
+                          metavar="IPADDR")
 
 def add_options(parser, expert):
     add_freq_option(parser)
+    add_ipaddr_option(parser)
     usrp_options.add_tx_options(parser)
     transmit_path.transmit_path.add_options(parser, expert)
     expert.add_option("", "--tx-freq", type="eng_float", default=None,
@@ -79,8 +94,9 @@ class usrp_transmit_path(gr.hier_block2):
         and attaches to the transmitter's subdevice.
         """
 		#self.u = usrp_options.create_usrp_sink(options)
+	addr = 'addr=' + options.tx_ipaddr
 	self.u = uhd.usrp_sink(
-			device_addr="addr=192.168.40.1",
+			device_addr=addr,
 			io_type=uhd.io_type.COMPLEX_FLOAT32,
 			num_channels=1,
 		)
