@@ -1,6 +1,5 @@
-/* -*- c++ -*- */
 /*
- * Copyright 2004 Free Software Foundation, Inc.
+ * Copyright 2011 Free Software Foundation, Inc.
  * 
  * This file is part of GNU Radio
  * 
@@ -20,22 +19,21 @@
  * Boston, MA 02110-1301, USA.
  */
 
-GR_SWIG_BLOCK_MAGIC(trellis,permutation);
+#ifndef INCLUDED_GR_UHD_AMSG_SOURCE_H
+#define INCLUDED_GR_UHD_AMSG_SOURCE_H
 
-trellis_permutation_sptr trellis_make_permutation (int K, const std::vector<int> &TABLE, int SYMS_PER_BLOCK, size_t BYTES_PER_SYMBOL);
+#include <gr_uhd_api.h>
+#include <uhd/usrp/multi_usrp.hpp>
+#include <gr_msg_queue.h>
 
-class trellis_permutation : public gr_sync_block
-{
-private:
-  int d_K;
-  std::vector<int> d_TABLE;
-  int d_SYMS_PER_BLOCK;
-  size_t d_BYTES_PER_SYMBOL;
-  trellis_permutation (int K, const std::vector<int> &TABLE, int SYMS_PER_BLOCK, size_t BYTES_PER_SYMBOL); 
+class uhd_amsg_source;
 
-public:
-  int K () const { return d_K; }
-  const std::vector<int> & TABLE () const { return d_TABLE; }
-  int SYMS_PER_BLOCK () const { return d_SYMS_PER_BLOCK; }
-  size_t BYTES_PER_SYMBOL () const { return d_BYTES_PER_SYMBOL; }
+GR_UHD_API boost::shared_ptr<uhd_amsg_source> uhd_make_amsg_source(
+    const uhd::device_addr_t &device_addr,
+    gr_msg_queue_sptr msgq
+);
+
+class GR_UHD_API uhd_amsg_source{
 };
+
+#endif /* INCLUDED_GR_UHD_AMSG_SOURCE_H */
