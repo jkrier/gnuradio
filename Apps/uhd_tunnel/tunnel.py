@@ -20,6 +20,9 @@
 # Boston, MA 02110-1301, USA.
 # 
 
+#example
+#python "%f" -f 920e6 --ipaddr='192.168.40.1' -v
+
 
 # /////////////////////////////////////////////////////////////////////////////
 #
@@ -166,8 +169,8 @@ class cs_mac(object):
                 if delay < 0.050:
                     delay = delay * 2       # exponential back-off
 
-            #self.tb.send_pkt(payload)
-            self.tb.send_pkt('a'*100)
+            self.tb.send_pkt(payload)
+            #self.tb.send_pkt('a'*100)
 
 
 # /////////////////////////////////////////////////////////////////////////////

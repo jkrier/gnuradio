@@ -18,6 +18,7 @@ from gnuradio import eng_notation
 from gnuradio import gr
 from gnuradio import uhd
 from gnuradio import window
+from gnuradio import packet_utils
 from gnuradio.eng_option import eng_option
 from gnuradio.gr import firdes
 from gnuradio.wxgui import constsink_gl
@@ -139,7 +140,17 @@ class layout(grc_wxgui.top_block_gui):
 			
 	def send_pkt(self, payload=''):
 		if(~self.txq.full_p()):
-			self.txq.insert_tail(gr.message_from_string(payload))
+			#self.txq.insert_tail(gr.message_from_string(payload))
+			packet = packet_utils.make_packet(
+				payload,
+				4,			#samples per symbol
+				2,			#bits per symbol
+				"10101011",	#access code	
+				True		#pad for usrp
+			)
+		msg = gr.message_from_string(packet)
+		self.txq.insert_tail(msg)
+
 			
 	def set_DataLink_Layer(self, datalink):
 		self.datalink = datalink
@@ -157,7 +168,7 @@ if __name__ == '__main__':
 	
 	Physical_Layer = layout()
 	DataLink_Layer = Layer_2_3.DataLink()
-	DataLink_Layer.set_phy(Physical_Layer)
+	DataLink_Layer.set_Physical_Layer(Physical_Layer)
 	Network_Layer = Layer_2_3.Network()	
 	Network_Layer.set_DataLink(DataLink_Layer)
 	
@@ -166,8 +177,8 @@ if __name__ == '__main__':
 	
 		
 	Physical_Layer.start()
-	Physical_Layer.uhd_usrp_sink_0.set_center_freq(Physical_Layer.ch_freq, 0)
-	Physical_Layer.uhd_usrp_source_0.set_center_freq(Physical_Layer.ch_freq, 0)
+	Physical_Layer.uhd_usrp_sink_0.set_center_freq(920e6, 0)
+	Physical_Layer.uhd_usrp_source_0.set_center_freq(930e6, 0)
 	
 	ipaddr = raw_input('\nEnter an IP Address for this device: ')	
 	Network_Layer.set_ip_address(ipaddr)

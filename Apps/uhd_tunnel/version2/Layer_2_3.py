@@ -90,7 +90,7 @@ class DataLink():
 	def recv_pkt(self, payload):
 		network.receive_data(payload)
 			
-	def set_phy(self, phy):
+	def set_Physical_Layer(self, phy):
 		self.phy = phy
 		
 	def set_Network_Layer(self, network):
