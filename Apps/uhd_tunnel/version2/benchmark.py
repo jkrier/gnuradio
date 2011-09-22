@@ -39,6 +39,8 @@ class layout(grc_wxgui.top_block_gui):
 
 	def __init__(self):
 		grc_wxgui.top_block_gui.__init__(self, title="Benchmark")
+		
+		self.debug = False
 
 		##################################################
 		# Variables
@@ -71,25 +73,19 @@ class layout(grc_wxgui.top_block_gui):
 			verbose=False,
 			log=False,
 		)
-		self.blks2_packet_decoder_0 = grc_blks2.packet_demod_b(grc_blks2.packet_decoder(
-				access_code="10101011",
-				threshold=0,
-				#callback=lambda ok, payload: self.blks2_packet_decoder_0.recv_pkt(ok, payload),
-				callback=lambda ok, payload: self.rx_callback(ok, payload),
-			),
-		)
-		self.txpath = grc_blks2.packet_encoder(
-			samples_per_symbol=4,
-			bits_per_symbol=2,
-			access_code="10101011",
-			pad_for_usrp=True,
-		)
-		self.blks2_packet_encoder_0 = grc_blks2.packet_mod_b(
-                        self.txpath,
-                        payload_length=self.pkt_size,
-		)
+		#"10101011"
+		self.mod = blks2.mod_pkts(self.blks2_dxpsk_mod_0,
+                           access_code=None,
+                           msgq_limit=4,
+                           pad_for_usrp=True)
+                           
+		self.demod = blks2.demod_pkts(self.blks2_dxpsk_demod_0,
+						 access_code="10101011",
+						 callback=self.rx_callback,
+						 threshold=-1)
+		
 		self.uhd_usrp_sink_0 = uhd.usrp_sink(
-			device_addr="addr=192.168.40.1",
+			device_addr="addr=192.168.40.5",
 			io_type=uhd.io_type.COMPLEX_FLOAT32,
 			num_channels=1,
 		)
@@ -98,7 +94,7 @@ class layout(grc_wxgui.top_block_gui):
 		self.uhd_usrp_sink_0.set_gain(self.tx_gain, 0)
 		self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
 		self.uhd_usrp_source_0 = uhd.usrp_source(
-			device_addr="addr=192.168.40.1",
+			device_addr="addr=192.168.40.5",
 			io_type=uhd.io_type.COMPLEX_FLOAT32,
 			num_channels=1,
 		)
@@ -106,22 +102,46 @@ class layout(grc_wxgui.top_block_gui):
 		#self.uhd_usrp_source_0.set_center_freq(tune_freq, 0)
 		self.uhd_usrp_source_0.set_gain(self.rx_gain, 0)
 		self.uhd_usrp_source_0.set_antenna("RX2", 0)
+
 		
-		self.txq = gr.msg_queue()
-		self.rxq = gr.msg_queue()
-		self.msg_source = gr.message_source(gr.sizeof_char, self.txq)
-		self.msg_sink = gr.message_sink(gr.sizeof_char, self.rxq, True)
+		# Carrier Sensing Blocks
+		
+		# Parks-McClellen filter options:
+		pm_gain = 1           # gain
+		pm_sr = 1             # sample rate
+		pm_pb = 0.13          # end of passband
+		pm_sb = 0.2675        # start of stop band
+		pm_pb_ripple = 0.01   # passband ripple (dB)
+		pm_sb_atten = 60      # stopband attenuation (dB)
+		
+		lpf_taps = blks2.optfir.low_pass(pm_gain, pm_sr, pm_pb, pm_sb,
+                                      pm_pb_ripple, pm_sb_atten)
+                                      
+		self.lpf = gr.fft_filter_ccc(1, lpf_taps)
+		
+		alpha = 0.001
+		thresh = 30   # in dB, will have to adjust
+		self.probe = gr.probe_avg_mag_sqrd_c(thresh,alpha)
 		
 		##################################################
 		# Connections
 		##################################################
-		self.connect((self.msg_source, 0), (self.blks2_packet_encoder_0, 0))
-		self.connect((self.blks2_packet_encoder_0, 0), (self.blks2_dxpsk_mod_0, 0))
-		self.connect((self.blks2_dxpsk_mod_0, 0), (self.uhd_usrp_sink_0, 0))
+		#self.connect((self.msg_source, 0), (self.blks2_packet_encoder_0, 0))
+		#self.connect((self.blks2_packet_encoder_0, 0), (self.blks2_dxpsk_mod_0, 0))
+		#self.connect((self.blks2_dxpsk_mod_0, 0), (self.uhd_usrp_sink_0, 0))
+		self.connect((self.mod, 0), self.uhd_usrp_sink_0)
 		
-		self.connect((self.uhd_usrp_source_0, 0), (self.blks2_dxpsk_demod_0, 0))
-		self.connect((self.blks2_dxpsk_demod_0, 0), (self.blks2_packet_decoder_0, 0))			
-		self.connect((self.blks2_packet_decoder_0, 0), (self.msg_sink, 0))
+		# connect block input to channel filter
+		self.connect((self.uhd_usrp_source_0, 0), (self.lpf, 0))
+		self.connect((self.lpf, 0), (self.demod, 0))
+		#self.connect((self.uhd_usrp_source_0, 0), (self.demod, 0))
+		
+		#self.connect((self.lpf, 0), (self.blks2_dxpsk_demod_0, 0))
+		#self.connect((self.blks2_dxpsk_demod_0, 0), (self.blks2_packet_decoder_0, 0))			
+		#self.connect((self.blks2_packet_decoder_0, 0), (self.msg_sink, 0))
+		
+		# connect the channel input filter to the carrier power detector
+		self.connect((self.lpf, 0), (self.probe, 0))
 
 	def set_samp_rate(self, samp_rate):
 		self.samp_rate = samp_rate
@@ -134,26 +154,26 @@ class layout(grc_wxgui.top_block_gui):
 
    	def rx_callback(self, ok, payload):
 		
-		print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))           
+		#print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))           
 		if ok:
+			msg = "Rx %d bytes" % len(payload)
+			self.debug_msg(msg) 
 			self.datalink.recv_pkt(payload)	
 			
-	def send_pkt(self, payload=''):
-		if(~self.txq.full_p()):
-			#self.txq.insert_tail(gr.message_from_string(payload))
-			packet = packet_utils.make_packet(
-				payload,
-				4,			#samples per symbol
-				2,			#bits per symbol
-				"10101011",	#access code	
-				True		#pad for usrp
-			)
-		msg = gr.message_from_string(packet)
-		self.txq.insert_tail(msg)
+	def send_pkt(self, payload='', eof=False):
+		if ~eof:
+			msg = "Tx %d bytes" % len(payload)
+			self.debug_msg(msg)
+
+		self.mod.send_pkt(payload, eof)
 
 			
 	def set_DataLink_Layer(self, datalink):
 		self.datalink = datalink
+		
+	def debug_msg(self, msg):
+		if (self.debug):
+			print "Physical: ", msg
     
 
 
@@ -177,13 +197,14 @@ if __name__ == '__main__':
 	
 		
 	Physical_Layer.start()
-	Physical_Layer.uhd_usrp_sink_0.set_center_freq(920e6, 0)
+	Physical_Layer.uhd_usrp_sink_0.set_center_freq(930e6, 0)
 	Physical_Layer.uhd_usrp_source_0.set_center_freq(930e6, 0)
 	
 	ipaddr = raw_input('\nEnter an IP Address for this device: ')	
 	Network_Layer.set_ip_address(ipaddr)
 	
-	Network_Layer.debug = True
+	Network_Layer.debug = False
+	Physical_Layer.debug = True
 	
 	while True:
 		Network_Layer.check_for_data_to_send(10*1024)

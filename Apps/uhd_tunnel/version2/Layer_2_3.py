@@ -6,8 +6,7 @@ import commands
 IFF_TUN		= 0x0001   # tunnel IP packets
 IFF_TAP		= 0x0002   # tunnel ethernet frames
 IFF_NO_PI	= 0x1000   # don't pass extra packet info
-IFF_ONE_QUEUE	= 0x2000   # beats me ;)
-TUNSETIFF = 0x400454ca
+TUNSETIFF 	= 0x400454ca
 
 class Network():
 	
