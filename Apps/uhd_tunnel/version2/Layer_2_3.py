@@ -39,7 +39,7 @@ class Network():
 				self.debug_msg(msg)
 			return payload
 		
-	def receive_data(payload):
+	def receive_data(self, payload):
 		msg = "Rx %d bytes " % len(payload)
 		self.debug_msg(msg)
 		os.write(self.tun_fd, payload)	
@@ -87,7 +87,7 @@ class DataLink():
 			self.phy.send_pkt(payload)
 	
 	def recv_pkt(self, payload):
-		network.receive_data(payload)
+		self.network.receive_data(payload)
 			
 	def set_Physical_Layer(self, phy):
 		self.phy = phy

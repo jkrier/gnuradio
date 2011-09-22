@@ -13,7 +13,7 @@
 #
 #############################################################################
 
-from gnuradio import blks2
+from gnuradio import blks2, modulation_utils
 from gnuradio import eng_notation
 from gnuradio import gr
 from gnuradio import uhd
@@ -80,7 +80,7 @@ class layout(grc_wxgui.top_block_gui):
                            pad_for_usrp=True)
                            
 		self.demod = blks2.demod_pkts(self.blks2_dxpsk_demod_0,
-						 access_code="10101011",
+						 access_code=None,
 						 callback=self.rx_callback,
 						 threshold=-1)
 		
@@ -153,7 +153,6 @@ class layout(grc_wxgui.top_block_gui):
 		print 'Rx Queue: %5d' % (self.rxq.count())
 
    	def rx_callback(self, ok, payload):
-		
 		#print "Rx: ok = %r  len(payload) = %4d" % (ok, len(payload))           
 		if ok:
 			msg = "Rx %d bytes" % len(payload)
@@ -181,7 +180,31 @@ if __name__ == '__main__':
     try:
 	parser = OptionParser(option_class=eng_option, usage="%prog: [options]")
 	(options, args) = parser.parse_args()
-	
+	"""
+	mods = modulation_utils.type_1_mods()
+	parser.add_option("-m", "--modulation", type="choice", choices=mods.keys(),
+                      default='gmsk',
+                      help="Select modulation from: %s [default=%%default]"
+                            % (', '.join(mods.keys()),))
+	parser.add_option("", '--ipaddr', type="string",
+					  action="callback", callback=ipaddr_callback, default='192.168.10.1',
+					  help="set Tx and/or Rx IP Address to IPADDR [default=%default]",
+					  metavar="IPADDR")
+	parser.add_option('-f', '--freq', type="eng_float",
+					  action="callback", callback=freq_callback,
+					  help="set Tx and/or Rx frequency to FREQ [default=%default]",
+					  metavar="FREQ")
+                            
+	if options.tx_freq is None:
+		sys.stderr.write("You must specify -f FREQ or --freq FREQ\n")
+		parser.print_help(sys.stderr)
+		sys.exit(1)
+        
+	if options.tx_freq is None:
+		sys.stderr.write("You must specify -f FREQ or --freq FREQ\n")
+		parser.print_help(sys.stderr)
+		sys.exit(1)
+	"""
 	commands.getoutput('sysctl -w net.core.wmem_max=1048576')
 	 
 	commands.getoutput('sysctl -w net.core.rmem_max=50000000') 
